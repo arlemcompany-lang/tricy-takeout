@@ -575,27 +575,8 @@
   ];
 
   window.onload = function () {
-    if (GAS_URL === 'YOUR_GAS_DEPLOYMENT_URL') {
-      menuSections = FALLBACK_MENU;
-      document.getElementById('headerTitle').textContent = 'Tricy';
-      renderMenu();
-      return;
-    }
-
-    fetch(GAS_URL + '?action=config')
-      .then(function(r) { return r.json(); })
-      .then(function(cfg) {
-        document.getElementById('headerTitle').textContent = cfg.storeName;
-      })
-      .catch(function() {});
-
-    fetch(GAS_URL + '?action=menu')
-      .then(function(r) { return r.json(); })
-      .then(function(sections) { menuSections = sections; renderMenu(); })
-      .catch(function() {
-        document.getElementById('menuList').innerHTML =
-          '<p style="color:#dc2626;font-size:0.85rem;padding:8px 0">メニューの読み込みに失敗しました。再読み込みしてください。</p>';
-      });
+    menuSections = FALLBACK_MENU;
+    renderMenu();
   };
 
   function renderMenu() {
