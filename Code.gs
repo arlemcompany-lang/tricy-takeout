@@ -74,21 +74,38 @@ function submitOrder(data) {
     var orderDate = Utilities.formatDate(now, CONFIG.timezone, 'yyyy/MM/dd HH:mm:ss');
     var total     = calcTotal(data.items);
 
+    // 単価テーブルを作成
+    var allItems = [];
+    var s;
+    for (s = 0; s < MENU_SECTIONS.length; s++) {
+      for (var n = 0; n < MENU_SECTIONS[s].items.length; n++) {
+        allItems.push(MENU_SECTIONS[s].items[n]);
+      }
+    }
+
     // 品目ごとに1行ずつ追記
     for (var i = 0; i < data.items.length; i++) {
-      var item     = data.items[i];
-      var subtotal = item.price * item.qty;
+      var item  = data.items[i];
+      var price = 0;
+      for (var k = 0; k < allItems.length; k++) {
+        if (allItems[k].name === item.name) { price = allItems[k].price; break; }
+      }
+      var subtotal = price * item.qty;
       sheet.appendRow([
-        orderNum,            // 注文番号
-        orderDate,           // 受付日時
-        data.name,           // 氏名
-        data.phone,          // 電話番号
-        item.name,           // 品名
-        item.qty,            // 個数
-        subtotal,            // 小計(円)
-        i === 0 ? total : '', // 合計(円)：先頭行のみ
-        i === 0 ? '受付済' : '' // ステータス：先頭行のみ
+        orderNum,
+        orderDate,
+        data.name,
+        data.phone,
+        item.name,
+        item.qty,
+        subtotal,
+        i === 0 ? total : '',
+        i === 0 ? '受付済' : '',
+        false  // できあがり（チェックボックス）
       ]);
+      // 追加した行のできあがり列にチェックボックスを設定
+      var lastRow = sheet.getLastRow();
+      sheet.getRange(lastRow, 10).insertCheckboxes();
     }
 
     var orderText = '';
@@ -113,7 +130,7 @@ function getOrCreateSheet() {
     sheet = ss.insertSheet(CONFIG.sheetName);
     var headers = [
       '注文番号', '受付日時', '氏名', '電話番号',
-      '品名', '個数', '小計(円)', '合計(円)', 'ステータス'
+      '品名', '個数', '小計(円)', '合計(円)', 'ステータス', 'できあがり'
     ];
     sheet.appendRow(headers);
     sheet.getRange(1, 1, 1, headers.length)
