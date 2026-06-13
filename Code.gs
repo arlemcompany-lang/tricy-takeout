@@ -6,6 +6,21 @@ var CONFIG = {
   timezone:      'Asia/Tokyo'
 };
 
+// 列番号の定義
+var COL = {
+  orderNum:  1,
+  orderDate: 2,
+  name:      3,
+  phone:     4,
+  email:     5,
+  itemName:  6,
+  qty:       7,
+  subtotal:  8,
+  total:     9,
+  status:    10,
+  done:      11
+};
+
 var MENU_SECTIONS = [
   {
     title: '霧島鶏のやきとり',
@@ -50,6 +65,89 @@ var MENU_SECTIONS = [
   }
 ];
 
+// ===== スプレッドシートにメニューを追加 =====
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('Tricy')
+    .addItem('完成メールの下書きを作成', 'createReadyDraft')
+    .addToUi();
+}
+
+// ===== 完成メール下書き作成 =====
+
+function createReadyDraft() {
+  var ui    = SpreadsheetApp.getUi();
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.sheetName);
+  if (!sheet) { ui.alert('注文一覧シートが見つかりません。'); return; }
+
+  var activeRow = sheet.getActiveCell().getRow();
+  if (activeRow <= 1) { ui.alert('注文の行を選択してから実行してください。'); return; }
+
+  var orderNum = sheet.getRange(activeRow, COL.orderNum).getValue();
+  if (!orderNum) { ui.alert('注文番号が見つかりません。'); return; }
+
+  // 同じ注文番号の全行を収集
+  var lastRow = sheet.getLastRow();
+  var allData = sheet.getRange(2, 1, lastRow - 1, COL.done).getValues();
+
+  var customerName  = '';
+  var customerEmail = '';
+  var customerPhone = '';
+  var orderDate     = '';
+  var orderTotal    = 0;
+  var itemLines     = [];
+  var allDone       = true;
+
+  for (var i = 0; i < allData.length; i++) {
+    if (allData[i][COL.orderNum - 1] === orderNum) {
+      if (!customerName) {
+        customerName  = allData[i][COL.name  - 1];
+        customerEmail = allData[i][COL.email - 1];
+        customerPhone = allData[i][COL.phone - 1];
+        orderDate     = allData[i][COL.orderDate - 1];
+        orderTotal    = allData[i][COL.total - 1];
+      }
+      itemLines.push(allData[i][COL.itemName - 1] + ' x' + allData[i][COL.qty - 1]);
+      if (!allData[i][COL.done - 1]) { allDone = false; }
+    }
+  }
+
+  if (!customerEmail) { ui.alert('メールアドレスが見つかりません。'); return; }
+
+  // 未チェックがある場合は確認
+  if (!allDone) {
+    var res = ui.alert(
+      'まだチェックされていない品目があります。\nこのまま下書きを作成しますか？',
+      ui.ButtonSet.YES_NO
+    );
+    if (res !== ui.Button.YES) { return; }
+  }
+
+  var body = customerName + ' 様\n\n'
+    + 'お待たせいたしました。\n'
+    + 'ご注文のお品物の準備ができました。\n\n'
+    + '─────────────────\n'
+    + '注文番号：' + orderNum + '\n\n'
+    + '《ご注文内容》\n'
+    + itemLines.join('\n') + '\n\n'
+    + '合計金額：' + orderTotal + '円（税込）\n'
+    + '─────────────────\n\n'
+    + '店頭にてお支払いください。\n'
+    + 'ご来店をお待ちしております。\n\n'
+    + CONFIG.storeName;
+
+  GmailApp.createDraft(
+    customerEmail,
+    'ご注文の準備ができました — ' + CONFIG.storeName,
+    body
+  );
+
+  ui.alert('Gmailの下書きに追加しました。\n確認して送信してください。');
+}
+
+// ===== GAS ウェブアプリ =====
+
 function doGet(e) {
   var action = (e && e.parameter) ? e.parameter.action : null;
   var data   = (action === 'menu') ? MENU_SECTIONS : { storeName: CONFIG.storeName };
@@ -66,6 +164,8 @@ function doPost(e) {
   }
 }
 
+// ===== 注文処理 =====
+
 function submitOrder(data) {
   try {
     var sheet     = getOrCreateSheet();
@@ -74,16 +174,14 @@ function submitOrder(data) {
     var orderDate = Utilities.formatDate(now, CONFIG.timezone, 'yyyy/MM/dd HH:mm:ss');
     var total     = calcTotal(data.items);
 
-    // 単価テーブルを作成
     var allItems = [];
-    var s;
+    var s, n;
     for (s = 0; s < MENU_SECTIONS.length; s++) {
-      for (var n = 0; n < MENU_SECTIONS[s].items.length; n++) {
+      for (n = 0; n < MENU_SECTIONS[s].items.length; n++) {
         allItems.push(MENU_SECTIONS[s].items[n]);
       }
     }
 
-    // 品目ごとに1行ずつ追記
     for (var i = 0; i < data.items.length; i++) {
       var item  = data.items[i];
       var price = 0;
@@ -92,20 +190,19 @@ function submitOrder(data) {
       }
       var subtotal = price * item.qty;
       sheet.appendRow([
-        orderNum,
-        orderDate,
-        data.name,
-        data.phone,
-        item.name,
-        item.qty,
-        subtotal,
-        i === 0 ? total : '',
-        i === 0 ? '受付済' : '',
-        false  // できあがり（チェックボックス）
+        orderNum,                  // 1: 注文番号
+        orderDate,                 // 2: 受付日時
+        data.name,                 // 3: 氏名
+        data.phone,                // 4: 電話番号
+        data.email,                // 5: メール
+        item.name,                 // 6: 品名
+        item.qty,                  // 7: 個数
+        subtotal,                  // 8: 小計(円)
+        i === 0 ? total    : '',   // 9: 合計(円)
+        i === 0 ? '受付済' : '',   // 10: ステータス
+        false                      // 11: できあがり
       ]);
-      // 追加した行のできあがり列にチェックボックスを設定
-      var lastRow = sheet.getLastRow();
-      sheet.getRange(lastRow, 10).insertCheckboxes();
+      sheet.getRange(sheet.getLastRow(), COL.done).insertCheckboxes();
     }
 
     var orderText = '';
@@ -123,13 +220,15 @@ function submitOrder(data) {
   }
 }
 
+// ===== ヘルパー =====
+
 function getOrCreateSheet() {
   var ss    = SpreadsheetApp.openById(CONFIG.spreadsheetId);
   var sheet = ss.getSheetByName(CONFIG.sheetName);
   if (!sheet) {
     sheet = ss.insertSheet(CONFIG.sheetName);
     var headers = [
-      '注文番号', '受付日時', '氏名', '電話番号',
+      '注文番号', '受付日時', '氏名', '電話番号', 'メール',
       '品名', '個数', '小計(円)', '合計(円)', 'ステータス', 'できあがり'
     ];
     sheet.appendRow(headers);
@@ -137,9 +236,11 @@ function getOrCreateSheet() {
          .setFontWeight('bold')
          .setBackground('#fed7aa');
     sheet.setFrozenRows(1);
-    sheet.setColumnWidth(1, 160);
-    sheet.setColumnWidth(2, 150);
-    sheet.setColumnWidth(6, 300);
+    sheet.setColumnWidth(1,  160);
+    sheet.setColumnWidth(2,  150);
+    sheet.setColumnWidth(5,  180);
+    sheet.setColumnWidth(6,  200);
+    sheet.setColumnWidth(11,  90);
   }
   return sheet;
 }
