@@ -72,15 +72,30 @@ function submitOrder(data) {
     var now       = new Date();
     var orderNum  = 'T' + Utilities.formatDate(now, CONFIG.timezone, 'yyyyMMddHHmmss');
     var orderDate = Utilities.formatDate(now, CONFIG.timezone, 'yyyy/MM/dd HH:mm:ss');
-    var orderText = '';
-    for (var i = 0; i < data.items.length; i++) {
-      if (i > 0) { orderText += '、'; }
-      orderText += data.items[i].name + 'x' + data.items[i].qty;
-    }
-    var total = calcTotal(data.items);
+    var total     = calcTotal(data.items);
 
-    sheet.appendRow([orderNum, orderDate, data.name, data.email,
-                     data.phone, orderText, total, '受付済']);
+    // 品目ごとに1行ずつ追記
+    for (var i = 0; i < data.items.length; i++) {
+      var item     = data.items[i];
+      var subtotal = item.price * item.qty;
+      sheet.appendRow([
+        orderNum,            // 注文番号
+        orderDate,           // 受付日時
+        data.name,           // 氏名
+        data.phone,          // 電話番号
+        item.name,           // 品名
+        item.qty,            // 個数
+        subtotal,            // 小計(円)
+        i === 0 ? total : '', // 合計(円)：先頭行のみ
+        i === 0 ? '受付済' : '' // ステータス：先頭行のみ
+      ]);
+    }
+
+    var orderText = '';
+    for (var j = 0; j < data.items.length; j++) {
+      if (j > 0) { orderText += '、'; }
+      orderText += data.items[j].name + 'x' + data.items[j].qty;
+    }
 
     sendCustomerEmail(data, orderNum, orderText, total);
     sendStoreEmail(data, orderNum, orderText, total);
@@ -97,8 +112,8 @@ function getOrCreateSheet() {
   if (!sheet) {
     sheet = ss.insertSheet(CONFIG.sheetName);
     var headers = [
-      '注文番号', '受付日時', '氏名', 'メール',
-      '電話番号', '注文内容', '合計金額(円)', 'ステータス'
+      '注文番号', '受付日時', '氏名', '電話番号',
+      '品名', '個数', '小計(円)', '合計(円)', 'ステータス'
     ];
     sheet.appendRow(headers);
     sheet.getRange(1, 1, 1, headers.length)
