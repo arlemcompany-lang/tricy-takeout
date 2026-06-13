@@ -6,19 +6,16 @@
 //    /spreadsheets/d/XXXXX/edit の XXXXX を SPREADSHEET_ID にセット
 // 2. STORE_EMAIL に店のGmailアドレスを入力
 // 3. GASエディタで「デプロイ」→「新しいデプロイ」
-//    種類: ウェブアプリ / 実行者: 自分 / アクセス: 全員
+//    種類: ウェブアプリ / 実行者: 自分 / アクセス: 全員（匿名ユーザーを含む）
 // 4. デプロイURLを index.html の GAS_URL にセット
 // ===================================================================
 
 const CONFIG = {
-  spreadsheetId:  'YOUR_SPREADSHEET_ID', // ← スプレッドシートIDに変更
-  sheetName:      '注文一覧',
-  storeEmail:     'YOUR_STORE_EMAIL',    // ← 店のメールアドレスに変更
-  storeName:      'Tricy',
-  timezone:       'Asia/Tokyo',
-  pickupStart:    '18:00',
-  pickupEnd:      '22:00',
-  pickupInterval: 30,
+  spreadsheetId: '1775-dNoJPgRZJRbW2g4rV18K3Tmma0suRaxp4PdQNmw',
+  sheetName:     '注文一覧',
+  storeEmail:    'arlem.company@gmail.com',
+  storeName:     'Tricy',
+  timezone:      'Asia/Tokyo',
 };
 
 const MENU_SECTIONS = [
@@ -42,12 +39,12 @@ const MENU_SECTIONS = [
     title: '野菜巻き',
     note:  '¥250/本（4本：¥1,000 / 8本：¥2,000）',
     items: [
-      { name: '万ねぎ',             price: 250 },
-      { name: 'アスパラ',           price: 250 },
-      { name: 'ピーマンチーズ',     price: 250 },
-      { name: 'トマト',             price: 250 },
-      { name: 'おもち',             price: 250 },
-      { name: 'まいたけ',           price: 250 },
+      { name: '万ねぎ',         price: 250 },
+      { name: 'アスパラ',       price: 250 },
+      { name: 'ピーマンチーズ', price: 250 },
+      { name: 'トマト',         price: 250 },
+      { name: 'おもち',         price: 250 },
+      { name: 'まいたけ',       price: 250 },
     ],
   },
   {
@@ -67,33 +64,24 @@ const MENU_SECTIONS = [
 
 // ===== GAS エントリポイント =====
 
-// GitHub Pages からの fetch に応答（JSON API）
 function doGet(e) {
   const action = e && e.parameter ? e.parameter.action : null;
-  const data = (action === 'menu') ? MENU_SECTIONS : {
-    storeName:      CONFIG.storeName,
-    pickupStart:    CONFIG.pickupStart,
-    pickupEnd:      CONFIG.pickupEnd,
-    pickupInterval: CONFIG.pickupInterval,
-  };
-  return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
+  const data   = (action === 'menu') ? MENU_SECTIONS : { storeName: CONFIG.storeName };
+  return json(data);
 }
 
-// GitHub Pages からの fetch POST に応答
 function doPost(e) {
   try {
     const data   = JSON.parse(e.postData.contents);
     const result = submitOrder(data);
-    return ContentService.createTextOutput(JSON.stringify(result))
-      .setMimeType(ContentService.MimeType.JSON);
+    return json(result);
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.message }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return json({ success: false, error: err.message });
   }
 }
 
-// 注文処理
+// ===== 注文処理 =====
+
 function submitOrder(data) {
   try {
     const sheet = getOrCreateSheet();
@@ -101,15 +89,22 @@ function submitOrder(data) {
 
     const orderNum  = 'T' + Utilities.formatDate(now, CONFIG.timezone, 'yyyyMMddHHmmss');
     const orderDate = Utilities.formatDate(now, CONFIG.timezone, 'yyyy/MM/dd HH:mm:ss');
+    const orderText = data.items.map(i => `${i.name}×${i.qty}`).join('、');
+    const total     = calcTotal(data.items);
 
-    const orderLines = data.items.map(i => `${i.name}×${i.qty}`).join('、');
-    const total      = calcTotal(data.items);
+    sheet.appendRow([
+      orderNum,   // 注文番号
+      orderDate,  // 受付日時
+      data.name,  // 氏名
+      data.email, // メール
+      data.phone, // 電話番号
+      orderText,  // 注文内容
+      total,      // 合計金額(円)
+      '受付済',   // ステータス
+    ]);
 
-    sheet.appendRow([orderNum, orderDate, data.name, data.email, data.phone,
-                     orderLines, total, data.pickupTime, '受付済']);
-
-    sendCustomerEmail(data, orderNum, orderLines, total);
-    sendStoreEmail(data, orderNum, orderLines, total);
+    sendCustomerEmail(data, orderNum, orderText, total);
+    sendStoreEmail(data, orderNum, orderText, total);
 
     return { success: true, orderNum, total };
   } catch (e) {
@@ -117,7 +112,7 @@ function submitOrder(data) {
   }
 }
 
-// ===== 内部ヘルパー =====
+// ===== ヘルパー =====
 
 function getOrCreateSheet() {
   const ss    = SpreadsheetApp.openById(CONFIG.spreadsheetId);
@@ -125,12 +120,15 @@ function getOrCreateSheet() {
   if (!sheet) {
     sheet = ss.insertSheet(CONFIG.sheetName);
     const headers = ['注文番号', '受付日時', '氏名', 'メール', '電話番号',
-                     '注文内容', '合計金額(円)', '受取時刻', 'ステータス'];
+                     '注文内容', '合計金額(円)', 'ステータス'];
     sheet.appendRow(headers);
     sheet.getRange(1, 1, 1, headers.length)
          .setFontWeight('bold')
-         .setBackground('#fef3c7');
+         .setBackground('#fed7aa'); // オレンジ系ヘッダー
     sheet.setFrozenRows(1);
+    sheet.setColumnWidth(1, 160); // 注文番号
+    sheet.setColumnWidth(2, 150); // 受付日時
+    sheet.setColumnWidth(6, 300); // 注文内容
   }
   return sheet;
 }
@@ -143,8 +141,8 @@ function calcTotal(items) {
   }, 0);
 }
 
-function sendCustomerEmail(data, orderNum, orderLines, total) {
-  const lines = [
+function sendCustomerEmail(data, orderNum, orderText, total) {
+  const body = [
     `${data.name} 様`,
     '',
     'ご注文ありがとうございます。',
@@ -152,12 +150,11 @@ function sendCustomerEmail(data, orderNum, orderLines, total) {
     '',
     '─────────────────────',
     `注文番号　：${orderNum}`,
-    `受取時刻　：${data.pickupTime}`,
     `お名前　　：${data.name}`,
     `お電話　　：${data.phone}`,
     '',
     '【ご注文内容】',
-    orderLines,
+    orderText,
     '',
     `合計金額　：¥${total.toLocaleString()}（税込）`,
     '─────────────────────',
@@ -166,32 +163,38 @@ function sendCustomerEmail(data, orderNum, orderLines, total) {
     'ご来店をお待ちしております。',
     '',
     CONFIG.storeName,
-  ];
+  ].join('\n');
+
   MailApp.sendEmail({
     to:      data.email,
-    subject: `【テイクアウト注文確認】注文番号 ${orderNum}`,
-    body:    lines.join('\n'),
+    subject: `【テイクアウト注文確認】注文番号 ${orderNum} — ${CONFIG.storeName}`,
+    body,
   });
 }
 
-function sendStoreEmail(data, orderNum, orderLines, total) {
-  const lines = [
+function sendStoreEmail(data, orderNum, orderText, total) {
+  const body = [
     '新しいテイクアウト注文が入りました。',
     '',
     `注文番号　：${orderNum}`,
-    `受取時刻　：${data.pickupTime}`,
     `お名前　　：${data.name}`,
     `メール　　：${data.email}`,
     `電話番号　：${data.phone}`,
     '',
     '【注文内容】',
-    orderLines,
+    orderText,
     '',
     `合計金額　：¥${total.toLocaleString()}（税込）`,
-  ];
+  ].join('\n');
+
   MailApp.sendEmail({
     to:      CONFIG.storeEmail,
-    subject: `【新規注文】${data.pickupTime} 受取 ${data.name} 様`,
-    body:    lines.join('\n'),
+    subject: `【新規注文】${data.name} 様 — ${orderText.slice(0, 30)}`,
+    body,
   });
+}
+
+function json(data) {
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
 }

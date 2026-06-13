@@ -2,215 +2,444 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>テイクアウト注文 | Tricy</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --bg:        #faf7f2;
+      --bg2:       #fff9f3;
+      --card:      #ffffff;
+      --border:    #f0e4d4;
+      --orange:    #ea580c;
+      --orange-d:  #c2410c;
+      --orange-l:  #fed7aa;
+      --orange-xl: #fff7ed;
+      --green:     #16a34a;
+      --red:       #dc2626;
+      --text:      #1c1917;
+      --text-dim:  #78716c;
+      --shadow:    0 2px 14px rgba(234,88,12,0.10);
+      --shadow-sm: 0 1px 6px rgba(0,0,0,0.07);
+    }
+
     body {
       font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
-      background: #fef9f0;
-      color: #333;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
+      padding-bottom: 100px;
     }
 
+    /* ── Header ── */
     .header {
-      background: #b45309;
-      color: white;
-      padding: 16px 20px;
-      text-align: center;
+      background: linear-gradient(135deg, #c2410c 0%, #ea580c 60%, #f97316 100%);
+      padding: 20px 16px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(194,65,12,0.30);
     }
-    .header h1 { font-size: 1.2rem; }
-    .header p  { font-size: 0.85rem; margin-top: 4px; opacity: 0.9; }
+    .header-inner {
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-logo {
+      font-size: 2rem;
+      line-height: 1;
+    }
+    .store-name {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #ffffff;
+      letter-spacing: 3px;
+    }
+    .store-tag {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.75);
+      margin-top: 2px;
+      letter-spacing: 1px;
+    }
 
+    /* ── Steps ── */
     .steps {
       display: flex;
-      justify-content: center;
       align-items: center;
-      padding: 14px 20px;
-      background: white;
-      border-bottom: 1px solid #e5e7eb;
+      justify-content: center;
+      padding: 10px 20px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      gap: 0;
+      box-shadow: var(--shadow-sm);
     }
     .step {
       display: flex;
       align-items: center;
-      gap: 5px;
-      font-size: 0.8rem;
-      color: #9ca3af;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: #c4b5a8;
     }
-    .step.active { color: #b45309; font-weight: bold; }
-    .step.done   { color: #16a34a; }
+    .step.active { color: var(--orange); font-weight: bold; }
+    .step.done   { color: var(--green); }
     .step-num {
-      width: 22px; height: 22px;
+      width: 24px; height: 24px;
       border-radius: 50%;
       border: 2px solid currentColor;
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.7rem; font-weight: bold;
+      font-size: 0.68rem; font-weight: bold;
     }
-    .step.done .step-num { background: #16a34a; color: white; border-color: #16a34a; }
-    .step-sep { width: 28px; height: 2px; background: #e5e7eb; margin: 0 4px; }
+    .step.active .step-num { background: var(--orange); border-color: var(--orange); color: white; }
+    .step.done   .step-num { background: var(--green);  border-color: var(--green);  color: white; }
+    .step-line { flex: 1; max-width: 48px; height: 1px; background: var(--border); margin: 0 4px; }
 
-    .container {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 20px 14px 40px;
-    }
+    /* ── Container ── */
+    .container { max-width: 480px; margin: 0 auto; padding: 16px 12px 24px; }
 
+    /* ── Section ── */
     .section {
-      background: white;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 14px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      background: var(--card);
+      border-radius: 16px;
+      padding: 18px 16px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
     }
     .section-title {
-      font-size: 0.88rem;
+      font-size: 0.82rem;
       font-weight: bold;
-      color: #b45309;
-      margin-bottom: 12px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #fde68a;
-    }
-
-    .form-group { margin-bottom: 14px; }
-    label { display: block; font-size: 0.84rem; color: #555; margin-bottom: 4px; }
-    .required::after {
-      content: '必須';
-      background: #b45309; color: white;
-      font-size: 0.65rem; padding: 1px 5px;
-      border-radius: 3px; margin-left: 6px;
-    }
-    input[type="text"],
-    input[type="email"],
-    input[type="tel"],
-    select {
-      width: 100%; padding: 10px 12px;
-      border: 1px solid #d1d5db; border-radius: 8px;
-      font-size: 1rem; font-family: inherit;
-      outline: none; transition: border-color 0.2s;
-      background: white;
-    }
-    input:focus, select:focus { border-color: #b45309; }
-
-    /* メニューセクションヘッダー */
-    .menu-cat {
-      font-size: 0.84rem;
-      font-weight: bold;
-      color: #374151;
-      padding: 10px 0 4px;
-      margin-top: 6px;
-      border-bottom: 1px solid #fde68a;
-    }
-    .menu-cat:first-child { margin-top: 0; }
-    .menu-cat-note {
-      font-size: 0.75rem;
-      color: #6b7280;
-      padding: 3px 0 6px;
-    }
-
-    .menu-item {
+      color: var(--orange);
+      letter-spacing: 1.5px;
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 11px 0;
-      border-bottom: 1px solid #f3f4f6;
+      gap: 8px;
     }
-    .menu-item:last-child { border-bottom: none; }
-    .menu-name  { font-size: 0.95rem; }
-    .menu-price { font-size: 0.8rem; color: #6b7280; margin-top: 2px; }
-    .qty-ctrl   { display: flex; align-items: center; gap: 10px; }
-    .qty-btn {
-      width: 32px; height: 32px; border-radius: 50%;
-      border: 2px solid #d1d5db; background: white;
-      font-size: 1.1rem; cursor: pointer;
+    .section-title::before {
+      content: '';
+      width: 4px; height: 14px;
+      background: linear-gradient(to bottom, var(--orange), var(--orange-l));
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── Form ── */
+    .form-group { margin-bottom: 14px; }
+    .form-group:last-child { margin-bottom: 0; }
+    label { display: block; font-size: 0.78rem; color: var(--text-dim); margin-bottom: 6px; font-weight: 500; }
+    .required::after {
+      content: '必須';
+      background: var(--orange); color: white;
+      font-size: 0.6rem; font-weight: bold;
+      padding: 1px 5px; border-radius: 3px; margin-left: 6px;
+    }
+    input[type="text"], input[type="email"], input[type="tel"], select {
+      width: 100%; padding: 12px 14px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 1rem; font-family: inherit;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+      background: var(--bg2); color: var(--text);
+      -webkit-appearance: none;
+    }
+    input::placeholder { color: #c4b5a8; }
+    input:focus, select:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(234,88,12,0.12);
+      background: #ffffff;
+    }
+
+    /* ── Menu category header ── */
+    .menu-cat-header {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      padding: 18px 0 10px;
+      border-bottom: 2px solid var(--orange-l);
+      margin-bottom: 4px;
+    }
+    .menu-cat-header:first-child { padding-top: 0; }
+    .menu-cat-name {
+      font-size: 0.96rem;
+      font-weight: bold;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .menu-cat-note { font-size: 0.72rem; color: var(--text-dim); flex: 1; text-align: right; }
+
+    /* ── Menu grid (やきとり / 野菜巻き) ── */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .menu-card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 8px 10px;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .menu-card.has-qty {
+      border-color: var(--orange);
+      box-shadow: 0 2px 14px rgba(234,88,12,0.18);
+      transform: translateY(-1px);
+    }
+
+    /* 写真エリア（img タグがあれば写真、なければ絵文字サークル） */
+    .card-img {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      overflow: hidden;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--orange-xl), var(--orange-l));
       display: flex; align-items: center; justify-content: center;
-      color: #6b7280; transition: all 0.15s; line-height: 1;
+      flex-shrink: 0;
+    }
+    .card-img img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .menu-emoji {
+      font-size: 2rem;
+      line-height: 1;
+    }
+    .menu-name {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+      text-align: center;
+      margin-bottom: 3px;
+      line-height: 1.3;
+    }
+    .menu-price {
+      font-size: 0.72rem;
+      color: var(--orange);
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .qty-ctrl { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
+    .qty-btn {
+      width: 30px; height: 30px;
+      border-radius: 50%; border: none;
+      font-size: 1.1rem; font-weight: bold;
+      cursor: pointer; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.12s, background 0.12s;
       -webkit-tap-highlight-color: transparent;
     }
-    .qty-btn:active  { transform: scale(0.88); }
-    .qty-btn.plus    { border-color: #b45309; color: #b45309; }
-    .qty-num { min-width: 22px; text-align: center; font-size: 1rem; font-weight: bold; }
-
-    .btn {
-      width: 100%; padding: 14px;
-      border-radius: 10px; border: none;
-      font-size: 1rem; font-weight: bold;
-      cursor: pointer; transition: opacity 0.2s;
-      font-family: inherit;
+    .qty-btn:active { transform: scale(0.84); }
+    .qty-btn.minus {
+      background: var(--bg);
+      color: var(--text-dim);
+      border: 1.5px solid var(--border);
     }
-    .btn:active   { opacity: 0.8; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-primary   { background: #b45309; color: white; }
-    .btn-secondary { background: #f3f4f6; color: #374151; margin-top: 10px; }
+    .qty-btn.plus  { background: var(--orange); color: white; }
+    .qty-btn.plus:active { background: var(--orange-d); }
+    .qty-num {
+      font-size: 1rem; font-weight: bold;
+      color: #c4b5a8;
+      min-width: 20px; text-align: center;
+      transition: color 0.15s;
+    }
+    .qty-num.nonzero { color: var(--orange); }
 
+    /* ── Menu row (サイドメニュー) ── */
+    .menu-rows { margin-top: 8px; }
+    .menu-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+    .menu-row:last-child { border-bottom: none; }
+    .menu-row-img {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: linear-gradient(135deg, var(--orange-xl), var(--orange-l));
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.6rem;
+    }
+    .menu-row-img img { width: 100%; height: 100%; object-fit: cover; }
+    .menu-row-info  { flex: 1; min-width: 0; }
+    .menu-row-name  { font-size: 0.88rem; color: var(--text); font-weight: 500; line-height: 1.3; }
+    .menu-row-price { font-size: 0.76rem; color: var(--orange); font-weight: bold; margin-top: 3px; }
+    .menu-row-ctrl  { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+
+    /* ── Sticky cart bar ── */
+    .cart-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 200;
+      padding: 14px 20px;
+      padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+      background: linear-gradient(90deg, var(--orange-d), var(--orange));
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 -4px 20px rgba(234,88,12,0.30);
+    }
+    .cart-bar.visible { transform: translateY(0); }
+    .cart-bar:active  { opacity: 0.92; }
+    .cart-icon { font-size: 1.3rem; }
+    .cart-badge {
+      background: white;
+      color: var(--orange);
+      border-radius: 50%;
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.82rem; font-weight: bold;
+      flex-shrink: 0;
+    }
+    .cart-label { flex: 1; font-size: 0.95rem; font-weight: bold; color: white; }
+    .cart-total { font-size: 1.1rem; font-weight: bold; color: white; }
+
+    /* ── Buttons ── */
+    .btn {
+      width: 100%; padding: 15px;
+      border-radius: 12px; border: none;
+      font-size: 1rem; font-weight: bold;
+      cursor: pointer; font-family: inherit;
+      letter-spacing: 0.5px;
+      transition: transform 0.12s, opacity 0.15s, box-shadow 0.2s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary {
+      background: linear-gradient(90deg, var(--orange-d), var(--orange));
+      color: white;
+      box-shadow: 0 4px 16px rgba(234,88,12,0.30);
+    }
+    .btn-primary:hover { box-shadow: 0 6px 20px rgba(234,88,12,0.40); }
+    .btn-secondary {
+      background: var(--bg2);
+      color: var(--text-dim);
+      border: 1.5px solid var(--border);
+      margin-top: 10px;
+      box-shadow: none;
+    }
+
+    /* ── Confirm ── */
     .confirm-row {
-      display: flex; padding: 8px 0;
-      border-bottom: 1px solid #f3f4f6;
-      font-size: 0.9rem;
+      display: flex;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
     }
     .confirm-row:last-child { border-bottom: none; }
-    .confirm-label { color: #6b7280; min-width: 85px; flex-shrink: 0; }
+    .confirm-label { color: var(--text-dim); min-width: 80px; flex-shrink: 0; }
     .confirm-value { flex: 1; font-weight: 500; word-break: break-all; }
 
     .total-box {
-      background: #fef3c7; border-radius: 8px;
-      padding: 12px 16px; text-align: right; margin-top: 10px;
+      background: linear-gradient(135deg, var(--orange-xl), #fff3e8);
+      border: 1.5px solid var(--orange-l);
+      border-radius: 12px;
+      padding: 14px 16px;
+      text-align: right;
+      margin-top: 12px;
     }
-    .total-box .t-label  { font-size: 0.84rem; color: #6b7280; }
-    .total-box .t-amount { font-size: 1.3rem; font-weight: bold; color: #b45309; }
+    .total-box .t-label  { font-size: 0.8rem; color: var(--text-dim); }
+    .total-box .t-amount { font-size: 1.5rem; font-weight: bold; color: var(--orange); margin-top: 3px; }
 
-    .done-wrap { text-align: center; padding: 24px 0 10px; }
-    .done-icon { font-size: 3rem; margin-bottom: 12px; }
-    .done-wrap h2 { font-size: 1.1rem; }
-    .done-wrap p  { margin-top: 6px; color: #6b7280; font-size: 0.88rem; }
+    /* ── Done ── */
+    .done-wrap { text-align: center; padding: 24px 0 20px; }
+    .done-icon { font-size: 3.5rem; margin-bottom: 14px; }
+    .done-wrap h2 { font-size: 1.1rem; color: var(--text); font-weight: bold; }
+    .done-wrap p  { margin-top: 6px; color: var(--text-dim); font-size: 0.84rem; }
     .order-num-box {
-      background: #fef3c7; border-radius: 10px;
-      padding: 14px; margin: 18px 0 20px; text-align: center;
+      background: var(--orange-xl);
+      border: 1.5px solid var(--orange-l);
+      border-radius: 12px;
+      padding: 16px; margin: 20px 0;
+      text-align: center;
     }
-    .order-num-box .on-label { font-size: 0.82rem; color: #6b7280; }
-    .order-num-box .on-num   { font-size: 1.35rem; font-weight: bold; color: #b45309; letter-spacing: 1px; }
+    .order-num-box .on-label { font-size: 0.76rem; color: var(--text-dim); }
+    .order-num-box .on-num {
+      font-size: 1.4rem; font-weight: bold;
+      color: var(--orange); letter-spacing: 2px; margin-top: 5px;
+    }
     .notice {
-      background: #f0fdf4; border-left: 3px solid #16a34a;
-      padding: 10px 12px; border-radius: 0 6px 6px 0;
-      font-size: 0.85rem; color: #14532d; margin-top: 16px; line-height: 1.6;
+      background: rgba(22,163,74,0.06);
+      border-left: 3px solid var(--green);
+      padding: 12px 14px;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.84rem; color: #15803d;
+      margin-top: 16px; line-height: 1.7;
     }
 
+    /* ── Error ── */
     .error-msg {
-      background: #fef2f2; color: #dc2626;
-      border-radius: 8px; padding: 10px 12px;
-      font-size: 0.84rem; margin-top: 10px; display: none;
+      background: rgba(220,38,38,0.06);
+      color: #dc2626;
+      border: 1px solid rgba(220,38,38,0.20);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.84rem;
+      margin-top: 10px;
+      display: none;
     }
-    .loading { text-align: center; padding: 24px; color: #9ca3af; font-size: 0.9rem; }
+    .loading {
+      text-align: center;
+      padding: 32px;
+      color: var(--text-dim);
+      font-size: 0.88rem;
+    }
 
+    /* ── Pages ── */
     .page        { display: none; }
     .page.active { display: block; }
+
+    @keyframes pop {
+      0%   { transform: scale(1); }
+      45%  { transform: scale(1.4); }
+      100% { transform: scale(1); }
+    }
+    .qty-num.pop { animation: pop 0.22s ease; }
   </style>
 </head>
 <body>
 
-<!-- ======================================================
-  GAS をデプロイしたら下記の URL を書き換えてください
-======================================================= -->
-<script>
-  var GAS_URL = 'YOUR_GAS_DEPLOYMENT_URL'; // ← デプロイURL に変更
-</script>
+<!-- GAS デプロイ後にURLを書き換える -->
+<script>var GAS_URL = 'https://script.google.com/macros/s/AKfycbxf3hWbst41POvRiRDzCY6TiUq_mZJyVOffW9sXwz6JOh5HMkrD-_vSkOMNfqCvB09t/exec';</script>
 
 <div class="header">
-  <h1 id="headerTitle">テイクアウト注文</h1>
-  <p>ご注文はこちらからどうぞ</p>
+  <div class="header-inner">
+    <div class="header-logo">🔥</div>
+    <div>
+      <div class="store-name" id="headerTitle">Tricy</div>
+      <div class="store-tag">テイクアウト注文</div>
+    </div>
+  </div>
 </div>
 
 <div class="steps">
-  <div class="step active" id="step1"><div class="step-num">1</div><span>入力</span></div>
-  <div class="step-sep"></div>
+  <div class="step active" id="step1"><div class="step-num">1</div><span>注文</span></div>
+  <div class="step-line"></div>
   <div class="step" id="step2"><div class="step-num">2</div><span>確認</span></div>
-  <div class="step-sep"></div>
+  <div class="step-line"></div>
   <div class="step" id="step3"><div class="step-num">3</div><span>完了</span></div>
 </div>
 
 <div class="container">
 
-  <!-- ページ1：入力フォーム -->
+  <!-- ページ1：注文入力 -->
   <div class="page active" id="page1">
     <div class="section">
       <div class="section-title">お客様情報</div>
@@ -226,16 +455,10 @@
         <label class="required">電話番号</label>
         <input type="tel" id="phone" placeholder="090-0000-0000" autocomplete="tel">
       </div>
-      <div class="form-group">
-        <label class="required">受取時刻</label>
-        <select id="pickupTime">
-          <option value="">-- 選択してください --</option>
-        </select>
-      </div>
     </div>
 
     <div class="section">
-      <div class="section-title">ご注文内容</div>
+      <div class="section-title">メニュー</div>
       <div id="menuList"><div class="loading">メニューを読み込み中...</div></div>
     </div>
 
@@ -266,7 +489,7 @@
   <div class="page" id="page3">
     <div class="section">
       <div class="done-wrap">
-        <div class="done-icon">✅</div>
+        <div class="done-icon">🎉</div>
         <h2>ご注文ありがとうございます</h2>
         <p>確認メールをお送りしました。</p>
         <div class="order-num-box">
@@ -277,156 +500,246 @@
       <div id="resultSummary"></div>
       <div class="notice">
         当日、店頭にてお支払いください。<br>
-        ご来店をお待ちしております。
+        ご来店をお待ちしております。🍢
       </div>
     </div>
   </div>
 
 </div>
 
+<!-- スティッキーカートバー -->
+<div class="cart-bar" id="cartBar" onclick="goToConfirm()">
+  <span class="cart-icon">🛒</span>
+  <div class="cart-badge" id="cartCount">0</div>
+  <div class="cart-label">注文内容を確認する</div>
+  <div class="cart-total" id="cartBarTotal">¥0</div>
+</div>
+
 <script>
   var menuSections = [];
   var orderData    = {};
 
+  var EMOJI = {
+    'ねっく':    '🍗', 'ぼんじり':  '🍖', 'ねぎま':  '🍢',
+    'なんこつ':  '🦴', 'レバー':    '❤️', 'かわ':    '🐓',
+    'はつ':      '🫀', 'つくね':    '🟤', '砂肝':    '🫙',
+    'ささみ':    '🍗', '万ねぎ':    '🌿', 'アスパラ':'🌱',
+    'ピーマンチーズ': '🫑', 'トマト': '🍅', 'おもち': '🍡',
+    'まいたけ':  '🍄',
+    '旨塩からあげ 3個':              '🍗',
+    '旨塩からあげ 6個':              '🍗',
+    'カレーのポテサラ':              '🥗',
+    '鶏なんこつの梅水晶':            '💎',
+    'ほくほく 厚切りフライドポテト': '🍟',
+    '山芋のわさび漬け':              '🌿',
+    'なすのきんぴら':               '🍆',
+  };
+
+  /* 写真ファイルがあればここに追加（例: 'ねっく': 'img/nekku.jpg'）*/
+  var PHOTOS = {};
+
+  var FALLBACK_MENU = [
+    {
+      title: '霧島鶏のやきとり',
+      note:  '¥200/本（5本：¥1,000 / 10本：¥2,000）',
+      items: [
+        { name: 'ねっく',   price: 200 }, { name: 'ぼんじり', price: 200 },
+        { name: 'ねぎま',   price: 200 }, { name: 'なんこつ', price: 200 },
+        { name: 'レバー',   price: 200 }, { name: 'かわ',     price: 200 },
+        { name: 'はつ',     price: 200 }, { name: 'つくね',   price: 200 },
+        { name: '砂肝',     price: 200 }, { name: 'ささみ',   price: 200 },
+      ],
+    },
+    {
+      title: '野菜巻き',
+      note:  '¥250/本（4本：¥1,000 / 8本：¥2,000）',
+      items: [
+        { name: '万ねぎ',         price: 250 }, { name: 'アスパラ',       price: 250 },
+        { name: 'ピーマンチーズ', price: 250 }, { name: 'トマト',         price: 250 },
+        { name: 'おもち',         price: 250 }, { name: 'まいたけ',       price: 250 },
+      ],
+    },
+    {
+      title: 'サイドメニュー',
+      note:  '',
+      items: [
+        { name: '旨塩からあげ 3個',              price: 500  },
+        { name: '旨塩からあげ 6個',              price: 1000 },
+        { name: 'カレーのポテサラ',              price: 500  },
+        { name: '鶏なんこつの梅水晶',            price: 500  },
+        { name: 'ほくほく 厚切りフライドポテト', price: 500  },
+        { name: '山芋のわさび漬け',              price: 500  },
+        { name: 'なすのきんぴら',               price: 500  },
+      ],
+    },
+  ];
+
   window.onload = function () {
     if (GAS_URL === 'YOUR_GAS_DEPLOYMENT_URL') {
-      document.getElementById('menuList').innerHTML =
-        '<p style="color:#dc2626;font-size:0.85rem;padding:8px 0">※ GAS_URL が未設定です。index.html の GAS_URL を書き換えてください。</p>';
+      menuSections = FALLBACK_MENU;
+      document.getElementById('headerTitle').textContent = 'Tricy';
+      renderMenu();
       return;
     }
 
     fetch(GAS_URL + '?action=config')
       .then(function(r) { return r.json(); })
       .then(function(cfg) {
-        document.getElementById('headerTitle').textContent = cfg.storeName + ' テイクアウト注文';
-        buildPickupTimes(cfg.pickupStart, cfg.pickupEnd, cfg.pickupInterval);
+        document.getElementById('headerTitle').textContent = cfg.storeName;
       })
       .catch(function() {});
 
     fetch(GAS_URL + '?action=menu')
       .then(function(r) { return r.json(); })
-      .then(function(sections) {
-        menuSections = sections;
-        renderMenu();
-      })
+      .then(function(sections) { menuSections = sections; renderMenu(); })
       .catch(function() {
         document.getElementById('menuList').innerHTML =
-          '<p style="color:#dc2626;font-size:0.85rem">メニューの読み込みに失敗しました。ページを再読み込みしてください。</p>';
+          '<p style="color:#dc2626;font-size:0.85rem;padding:8px 0">メニューの読み込みに失敗しました。再読み込みしてください。</p>';
       });
   };
 
-  function buildPickupTimes(start, end, interval) {
-    var sel = document.getElementById('pickupTime');
-    var sh = parseInt(start.split(':')[0]), sm = parseInt(start.split(':')[1]);
-    var eh = parseInt(end.split(':')[0]),   em = parseInt(end.split(':')[1]);
-    var h = sh, m = sm;
-    while (h < eh || (h === eh && m <= em)) {
-      var label = pad(h) + ':' + pad(m);
-      var opt = document.createElement('option');
-      opt.value = label; opt.textContent = label;
-      sel.appendChild(opt);
-      m += interval;
-      if (m >= 60) { h++; m -= 60; }
-    }
-  }
-
-  function pad(n) { return n < 10 ? '0' + n : '' + n; }
-
   function renderMenu() {
     var html = '';
-    menuSections.forEach(function(section, si) {
-      html += '<div class="menu-cat">' + esc(section.title) + '</div>';
-      if (section.note) {
-        html += '<div class="menu-cat-note">' + esc(section.note) + '</div>';
+    menuSections.forEach(function(sec, si) {
+      var isSide = sec.title === 'サイドメニュー';
+
+      html += '<div class="menu-cat-header">'
+            + '<span class="menu-cat-name">' + esc(sec.title) + '</span>'
+            + (sec.note ? '<span class="menu-cat-note">' + esc(sec.note) + '</span>' : '')
+            + '</div>';
+
+      if (isSide) {
+        html += '<div class="menu-rows">';
+        sec.items.forEach(function(item, ii) {
+          var em    = EMOJI[item.name] || '🍽️';
+          var photo = PHOTOS[item.name];
+          var imgHtml = photo
+            ? '<img src="' + photo + '" alt="' + esc(item.name) + '" onerror="this.parentNode.innerHTML=\'' + em + '\'">'
+            : em;
+          html += '<div class="menu-row">'
+                + '<div class="menu-row-img">' + imgHtml + '</div>'
+                + '<div class="menu-row-info">'
+                + '<div class="menu-row-name">' + esc(item.name) + '</div>'
+                + '<div class="menu-row-price">¥' + item.price.toLocaleString() + '</div>'
+                + '</div>'
+                + '<div class="menu-row-ctrl">'
+                + '<button class="qty-btn minus" onclick="changeQty(' + si + ',' + ii + ',-1)">−</button>'
+                + '<span class="qty-num" id="qty_' + si + '_' + ii + '">0</span>'
+                + '<button class="qty-btn plus"  onclick="changeQty(' + si + ',' + ii + ', 1)">＋</button>'
+                + '</div></div>';
+        });
+        html += '</div>';
+      } else {
+        html += '<div class="menu-grid">';
+        sec.items.forEach(function(item, ii) {
+          var em    = EMOJI[item.name] || '🍽️';
+          var photo = PHOTOS[item.name];
+          var imgHtml = photo
+            ? '<img src="' + photo + '" alt="' + esc(item.name) + '" onerror="this.parentNode.innerHTML=\'' + em + '\'">'
+            : '<span class="menu-emoji">' + em + '</span>';
+          html += '<div class="menu-card" id="card_' + si + '_' + ii + '">'
+                + '<div class="card-img">' + imgHtml + '</div>'
+                + '<div class="menu-name">' + esc(item.name) + '</div>'
+                + '<div class="menu-price">¥' + item.price.toLocaleString() + '</div>'
+                + '<div class="qty-ctrl">'
+                + '<button class="qty-btn minus" onclick="changeQty(' + si + ',' + ii + ',-1)">−</button>'
+                + '<span class="qty-num" id="qty_' + si + '_' + ii + '">0</span>'
+                + '<button class="qty-btn plus"  onclick="changeQty(' + si + ',' + ii + ', 1)">＋</button>'
+                + '</div></div>';
+        });
+        html += '</div>';
       }
-      section.items.forEach(function(item, ii) {
-        html += '<div class="menu-item">'
-          + '<div><div class="menu-name">' + esc(item.name) + '</div>'
-          + '<div class="menu-price">¥' + item.price.toLocaleString() + '</div></div>'
-          + '<div class="qty-ctrl">'
-          + '<button class="qty-btn minus" onclick="changeQty(' + si + ',' + ii + ',-1)">−</button>'
-          + '<span class="qty-num" id="qty_' + si + '_' + ii + '">0</span>'
-          + '<button class="qty-btn plus"  onclick="changeQty(' + si + ',' + ii + ',1)">＋</button>'
-          + '</div></div>';
-      });
     });
     document.getElementById('menuList').innerHTML = html;
   }
 
   function changeQty(si, ii, delta) {
     var el  = document.getElementById('qty_' + si + '_' + ii);
-    var cur = parseInt(el.textContent, 10);
-    el.textContent = Math.max(0, cur + delta);
+    var nv  = Math.max(0, +el.textContent + delta);
+    el.textContent = nv;
+    el.className   = 'qty-num' + (nv > 0 ? ' nonzero' : '');
+    if (delta > 0) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+
+    var card = document.getElementById('card_' + si + '_' + ii);
+    if (card) card.className = 'menu-card' + (nv > 0 ? ' has-qty' : '');
+
+    updateCartBar();
+  }
+
+  function updateCartBar() {
+    var totalQty = 0, totalPrice = 0;
+    menuSections.forEach(function(sec, si) {
+      sec.items.forEach(function(item, ii) {
+        var qty = +document.getElementById('qty_' + si + '_' + ii).textContent;
+        if (qty > 0) { totalQty += qty; totalPrice += item.price * qty; }
+      });
+    });
+    document.getElementById('cartCount').textContent    = totalQty;
+    document.getElementById('cartBarTotal').textContent = '¥' + totalPrice.toLocaleString();
+    var bar = document.getElementById('cartBar');
+    if (totalQty > 0) bar.classList.add('visible');
+    else              bar.classList.remove('visible');
   }
 
   function goToConfirm() {
-    var name       = document.getElementById('name').value.trim();
-    var email      = document.getElementById('email').value.trim();
-    var phone      = document.getElementById('phone').value.trim();
-    var pickupTime = document.getElementById('pickupTime').value;
-    var errEl      = document.getElementById('err1');
+    var name  = document.getElementById('name').value.trim();
+    var email = document.getElementById('email').value.trim();
+    var phone = document.getElementById('phone').value.trim();
+    var errEl = document.getElementById('err1');
 
-    if (!name || !email || !phone || !pickupTime) {
+    if (!name || !email || !phone)
       return showError(errEl, 'お客様情報をすべて入力してください。');
-    }
-    if (email.indexOf('@') < 1) {
+    if (email.indexOf('@') < 1)
       return showError(errEl, 'メールアドレスの形式が正しくありません。');
-    }
 
     var items = [];
-    menuSections.forEach(function(section, si) {
-      section.items.forEach(function(item, ii) {
-        var qty = parseInt(document.getElementById('qty_' + si + '_' + ii).textContent, 10);
+    menuSections.forEach(function(sec, si) {
+      sec.items.forEach(function(item, ii) {
+        var qty = +document.getElementById('qty_' + si + '_' + ii).textContent;
         if (qty > 0) items.push({ name: item.name, price: item.price, qty: qty });
       });
     });
-
-    if (items.length === 0) {
+    if (items.length === 0)
       return showError(errEl, '少なくとも1品お選びください。');
-    }
 
     errEl.style.display = 'none';
-    orderData = { name: name, email: email, phone: phone, pickupTime: pickupTime, items: items };
+    orderData = { name: name, email: email, phone: phone, items: items };
     renderConfirmation();
     showPage('page2');
     setStep(2);
+    document.getElementById('cartBar').classList.remove('visible');
   }
 
   function renderConfirmation() {
     document.getElementById('confirmCustomer').innerHTML =
       row('お名前',   orderData.name)
       + row('メール',   orderData.email)
-      + row('電話番号', orderData.phone)
-      + row('受取時刻', orderData.pickupTime);
+      + row('電話番号', orderData.phone);
 
     var total    = calcTotal();
     var itemHtml = orderData.items.map(function(i) {
-      return row(i.name, i.qty + '本／個 × ¥' + i.price + ' ＝ ¥' + (i.price * i.qty).toLocaleString());
+      return row((EMOJI[i.name] || '') + ' ' + i.name,
+                 i.qty + '本/個 × ¥' + i.price + ' ＝ ¥' + (i.price * i.qty).toLocaleString());
     }).join('');
     document.getElementById('confirmItems').innerHTML = itemHtml;
     document.getElementById('confirmTotal').textContent = '¥' + total.toLocaleString();
   }
 
-  function goBack() { showPage('page1'); setStep(1); }
+  function goBack() { showPage('page1'); setStep(1); updateCartBar(); }
 
   function doSubmit() {
     var btn   = document.getElementById('submitBtn');
     var errEl = document.getElementById('err2');
-    btn.disabled    = true;
-    btn.textContent = '送信中...';
-
-    var payload = {
-      name:       orderData.name,
-      email:      orderData.email,
-      phone:      orderData.phone,
-      pickupTime: orderData.pickupTime,
-      items:      orderData.items.map(function(i) { return { name: i.name, qty: i.qty }; }),
-    };
+    btn.disabled = true; btn.textContent = '送信中...';
 
     fetch(GAS_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body:    JSON.stringify(payload),
+      body:    JSON.stringify({
+        name: orderData.name, email: orderData.email,
+        phone: orderData.phone,
+        items: orderData.items.map(function(i) { return { name: i.name, qty: i.qty }; }),
+      }),
     })
       .then(function(r) { return r.json(); })
       .then(function(res) {
@@ -436,26 +749,23 @@
           showPage('page3');
           setStep(3);
         } else {
-          showError(errEl, '送信に失敗しました（' + (res.error || '不明なエラー') + '）。もう一度お試しください。');
-          btn.disabled    = false;
-          btn.textContent = 'この内容で注文を確定する';
+          showError(errEl, '送信に失敗しました（' + (res.error || '不明なエラー') + '）。');
+          btn.disabled = false; btn.textContent = 'この内容で注文を確定する';
         }
       })
       .catch(function() {
-        showError(errEl, '通信エラーが発生しました。ページを再読み込みして再度お試しください。');
-        btn.disabled    = false;
-        btn.textContent = 'この内容で注文を確定する';
+        showError(errEl, '通信エラーが発生しました。再読み込みして再度お試しください。');
+        btn.disabled = false; btn.textContent = 'この内容で注文を確定する';
       });
   }
 
   function renderResultSummary() {
     var total    = calcTotal();
-    var itemHtml = orderData.items.map(function(i) { return row(i.name, i.qty + '本／個'); }).join('');
+    var itemHtml = orderData.items.map(function(i) {
+      return row((EMOJI[i.name] || '') + ' ' + i.name, i.qty + '本/個');
+    }).join('');
     document.getElementById('resultSummary').innerHTML =
-      '<div style="margin-top:4px">'
-      + row('受取時刻', orderData.pickupTime)
-      + itemHtml
-      + '</div>'
+      '<div style="margin-top:4px">' + itemHtml + '</div>'
       + '<div class="total-box" style="margin-top:10px">'
       + '<div class="t-label">合計金額（税込）</div>'
       + '<div class="t-amount">¥' + total.toLocaleString() + '</div></div>';
@@ -478,25 +788,20 @@
     window.scrollTo(0, 0);
   }
 
-  function setStep(active) {
+  function setStep(n) {
     for (var i = 1; i <= 3; i++) {
-      var el = document.getElementById('step' + i);
-      el.className = 'step' + (i < active ? ' done' : i === active ? ' active' : '');
+      document.getElementById('step' + i).className =
+        'step' + (i < n ? ' done' : i === n ? ' active' : '');
     }
   }
 
   function showError(el, msg) {
-    el.textContent   = msg;
-    el.style.display = 'block';
+    el.textContent = msg; el.style.display = 'block';
     el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   function esc(s) {
-    return String(s)
-      .replace(/&/g,  '&amp;')
-      .replace(/</g,  '&lt;')
-      .replace(/>/g,  '&gt;')
-      .replace(/"/g,  '&quot;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 </script>
 </body>
